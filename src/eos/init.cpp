@@ -1,22 +1,19 @@
-#include <scream_api/scream_api.hpp>
-#include <scream_api/config.hpp>
-#include <game_mode/game_mode.hpp>
+#include <eos_init.h>
+#include <eos_logging.h>
 
 #include <koalabox/logger.hpp>
 
-#include <sdk/eos_init.h>
-#include <sdk/eos_logging.h>
+#include "scream_api/config.hpp"
+#include "scream_api/scream_api.hpp"
 
 DLL_EXPORT(EOS_EResult) EOS_Initialize(const EOS_InitializeOptions* Options) {
-    GET_ORIGINAL_FUNCTION(EOS_Initialize)
-
-    if (Options) {
-        LOG_DEBUG("EOS_Initialize -> ProductName: '{}'", Options->ProductName)
+    if(Options) {
+        LOG_DEBUG(R"({} -> ProductName: "{}")", __func__, Options->ProductName);
+    } else {
+        LOG_DEBUG("{} -> null options", __func__);
     }
 
-    auto result = EOS_Initialize_o(Options);
-
-    if (CONFIG.logging && CONFIG.eos_logging) {
+    if(scream_api::config::is_logging_eos()) {
         EOS_Logging_SetLogLevel(
             EOS_ELogCategory::EOS_LC_ALL_CATEGORIES,
             EOS_ELogLevel::EOS_LOG_VeryVerbose
@@ -24,22 +21,29 @@ DLL_EXPORT(EOS_EResult) EOS_Initialize(const EOS_InitializeOptions* Options) {
 
         EOS_Logging_SetCallback(
             [](const EOS_LogMessage* Message) {
-                LOG_DEBUG("[{}]\t{}", Message->Category, Message->Message)
+                LOG_DEBUG("[EOS_Logging] <{}>\t{}", Message->Category, Message->Message);
             }
         );
     }
 
-    return result;
+    CALL_ORIGINAL_FN(EOS_Initialize, return)(Options);
 }
 
 DLL_EXPORT(EOS_HPlatform) EOS_Platform_Create(const EOS_Platform_Options* Options) {
-    GET_ORIGINAL_FUNCTION(EOS_Platform_Create)
+    if(Options) {
+        LOG_DEBUG("{} -> ApiVersion: {}", __func__, Options->ApiVersion);
 
-    if (Options) {
-        LOG_INFO("🗃️ DLC database: https://scream-db.web.app/offers/{}", Options->SandboxId)
+        scream_api::namespace_id = Options->SandboxId;
 
-        scream_api::game_mode::namespace_id = Options->SandboxId;
+        static std::once_flag flag;
+        std::call_once(
+            flag, [&] {
+                LOG_INFO("DLC database: https://scream-db.web.app/games/{}", Options->SandboxId);
+            }
+        );
+    } else {
+        LOG_DEBUG("{} -> null options", __func__);
     }
 
-    return EOS_Platform_Create_o(Options);
+    CALL_ORIGINAL_FN(EOS_Platform_Create, return)(Options);
 }

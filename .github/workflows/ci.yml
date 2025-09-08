@@ -4,17 +4,15 @@ on: push
 jobs:
   ci:
     name: CI
-    uses: acidicoala/KoalaBox/.github/workflows/build-and-package.yml@acac7a4450414784f441dc55c52758f550f182ab
+    uses: acidicoala/KoalaBox/.github/workflows/build-and-package.yml@b28cf2aed819a183298c832d4e4cc6d298bbf55c
     permissions:
       contents: write
     with:
-      modules: >-
-        ["ScreamAPI"]
-
+      arch: '[ 32, 64 ]'
+      config: Release
+      modules: '[ "ScreamAPI" ]'
       zip_command: >
         zip -j $ZIP_NAME
         artifacts/*/*.dll
         res/ScreamAPI.config.json
         res/README.txt
-
-      config: Debug

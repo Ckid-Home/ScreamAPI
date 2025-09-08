@@ -1,58 +1,137 @@
-#include <scream_api/scream_api.hpp>
-#include <scream_api/config.hpp>
-#include <store_mode/store_mode.hpp>
-#include <game_mode/game_mode.hpp>
-#include <build_config.h>
+#include <eos_ecom.h>
+#include <eos_init.h>
+#include <eos_logging.h>
+#include <eos_metrics.h>
 
 #include <koalabox/config.hpp>
 #include <koalabox/dll_monitor.hpp>
 #include <koalabox/globals.hpp>
-#include <koalabox/win_util.hpp>
+#include <koalabox/hook.hpp>
+#include <koalabox/loader.hpp>
+#include <koalabox/path.hpp>
+#include <koalabox/paths.hpp>
+#include <koalabox/win.hpp>
 
-namespace scream_api {
+#include "build_config.h"
 
-    bool is_store_mode = false;
+#include "scream_api/scream_api.hpp"
+#include "scream_api/config.hpp"
 
-    bool is_epic_games_launcher(const String& exe_name) {
-        return exe_name < equals > "EpicGamesLauncher.exe";
+#define HOOK(FUNC) \
+    koalabox::hook::detour_or_warn( \
+        scream_api::eossdk_handle, \
+        koalabox::loader::get_decorated_function(scream_api::eossdk_handle, #FUNC), \
+        reinterpret_cast<void*>(FUNC) \
+    )
+
+namespace {
+    namespace kb = koalabox;
+
+    bool on_eossdk_loaded(const HMODULE eossdk_handle) {
+        scream_api::eossdk_handle = eossdk_handle;
+
+        HOOK(EOS_Initialize);
+        HOOK(EOS_Platform_Create);
+
+        HOOK(EOS_Ecom_CopyEntitlementByIndex);
+        HOOK(EOS_Ecom_CopyEntitlementByNameAndIndex);
+        HOOK(EOS_Ecom_CopyItemById);
+        HOOK(EOS_Ecom_Entitlement_Release);
+        HOOK(EOS_Ecom_GetEntitlementsByNameCount);
+        HOOK(EOS_Ecom_GetEntitlementsCount);
+        HOOK(EOS_Ecom_GetItemReleaseCount);
+        HOOK(EOS_Ecom_QueryEntitlementToken);
+        HOOK(EOS_Ecom_QueryEntitlements);
+        HOOK(EOS_Ecom_QueryOwnership);
+        HOOK(EOS_Ecom_QueryOwnershipBySandboxIds);
+        HOOK(EOS_Ecom_QueryOwnershipToken);
+        HOOK(EOS_Ecom_RedeemEntitlements);
+
+
+        if(scream_api::config::instance.block_metrics) {
+            HOOK(EOS_Metrics_BeginPlayerSession);
+            HOOK(EOS_Metrics_EndPlayerSession);
+        }
+
+        if(scream_api::config::is_logging_eos()) {
+            HOOK(EOS_Logging_SetCallback);
+            HOOK(EOS_Logging_SetLogLevel);
+        }
+
+        // Note: We should not shut down the listener because some games may mistakenly load EOS SDK DLL more than once.
+        return false;
     }
 
-    void init(HMODULE self_handle) {
+    void init_proxy_mode() {
+        LOG_INFO("Detected proxy mode");
+
+        const auto self_path = kb::paths::get_self_dir();
+        scream_api::eossdk_handle = kb::loader::load_original_library(self_path, EOSSDK_DLL);
+    }
+
+    void init_hook_mode() {
+        LOG_INFO("Detected hook mode");
+
+        kb::dll_monitor::init_listener(
+            {{EOSSDK_DLL, on_eossdk_loaded}}
+        );
+    }
+}
+
+namespace scream_api {
+    std::string namespace_id;
+
+    HMODULE eossdk_handle = nullptr;
+
+    bool hook_mode = false;
+
+    void init(const HMODULE module_handle) {
         try {
-            koalabox::globals::init_globals(self_handle, PROJECT_NAME);
+            kb::globals::init_globals(module_handle, PROJECT_NAME);
 
-            config::init();
+            config::instance = kb::config::parse<config::Config>();
 
-            if (config::instance.logging) {
-                koalabox::logger::init_file_logger();
+            if(config::instance.logging) {
+                kb::logger::init_file_logger(kb::paths::get_log_path());
             }
 
-            LOG_INFO("🐨 {} v{} | Compiled at '{}'", PROJECT_NAME, PROJECT_VERSION, __TIMESTAMP__)
+            LOG_INFO("{} v{} | Built at '{}'", PROJECT_NAME, PROJECT_VERSION, __TIMESTAMP__);
+            LOG_DEBUG("Parsed config:\n{}", nlohmann::ordered_json(config::instance).dump(2));
 
-            const auto exe_path = Path(koalabox::win_util::get_module_file_name_or_throw(nullptr));
-            const auto exe_name = exe_path.filename().string();
+            const auto exe_path = kb::win::get_module_path(nullptr);
+            const auto exe_name = kb::path::to_str(exe_path.filename());
 
-            LOG_DEBUG("Process name: '{}' [{}-bit]", exe_name, BITNESS)
+            LOG_DEBUG("Process name: '{}' [{}-bit]", exe_name, kb::util::BITNESS);
 
-            if (is_epic_games_launcher(exe_name)) {
-                is_store_mode = true;
-                store_mode::init_store_mode(exe_path);
+            // No harm in initializing it even if proxy mode doesn't use it
+            kb::hook::init(true);
+
+            if(kb::hook::is_hook_mode(module_handle, EOSSDK_DLL)) {
+                hook_mode = true;
+                init_hook_mode();
             } else {
-                game_mode::init_game_mode(self_handle);
+                init_proxy_mode();
             }
 
-            LOG_INFO("🚀 Initialization complete")
-        } catch (const Exception& e) {
-            koalabox::util::panic("Initialization error: {}", e.what());
+            LOG_INFO("Initialization complete");
+        } catch(const std::exception& e) {
+            kb::util::panic(fmt::format("Initialization error: {}", e.what()));
         }
     }
 
     void shutdown() {
-        LOG_INFO("💀 Shutdown complete")
+        try {
+            if(!hook_mode) {
+                kb::win::free_library(eossdk_handle);
+                eossdk_handle = nullptr;
+            }
 
-        if(is_store_mode){
-            store_mode::shutdown_store_mode();
+            kb::logger::shutdown();
+
+            LOG_INFO("Shutdown complete");
+        } catch(const std::exception& e) {
+            const auto msg = std::format("Shutdown error: {}", e.what());
+            LOG_ERROR(msg);
         }
     }
-
 }

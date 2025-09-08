@@ -1,15 +1,15 @@
+#include <koalabox/win.hpp>
+
+#include "linker_exports_for_eossdk.h"
+#include "linker_exports_for_version.h"
+
+#include "legacy_linker_exports.h"
 #include "scream_api/scream_api.hpp"
 
-// This header will be populated at build time
-#include <linker_exports.h>
-
-#include <legacy_linker_exports.h>
-
-EXTERN_C BOOL WINAPI DllMain(HMODULE handle, DWORD reason, LPVOID) {
-    if (reason == DLL_PROCESS_ATTACH) {
+EXTERN_C BOOLEAN WINAPI DllMain(const HMODULE handle, const DWORD reason, LPVOID) {
+    if(reason == DLL_PROCESS_ATTACH) {
         scream_api::init(handle);
-    } else if (reason == DLL_PROCESS_DETACH) {
-        // This isn't actually called on process exit
+    } else if(reason == DLL_PROCESS_DETACH) {
         scream_api::shutdown();
     }
 

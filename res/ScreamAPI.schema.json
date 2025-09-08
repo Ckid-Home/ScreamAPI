@@ -1,0 +1,102 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json",
+  "title": "ScreamAPI Configuration",
+  "type": "object",
+  "properties": {
+    "$schema": {
+      "type": "string",
+      "description": "URL of a JSON Schema that corresponds to this config.",
+      "format": "uri"
+    },
+    "$version": {
+      "type": "integer",
+      "description": "Reserved for use by tools like GUI config editors.",
+      "const": 3
+    },
+    "logging": {
+      "type": "boolean",
+      "description": "Enables logging to ScreamAPI.log.log file.",
+      "default": false
+    },
+    "log_eos": {
+      "type": "boolean",
+      "description": "Enables or disables interception of EOS SDK logs. Requires 'logging' to be enabled.",
+      "default": false
+    },
+    "block_metrics": {
+      "type": "boolean",
+      "description": "Blocks reporting of analytics and usage metrics by the game to Epic Online Services. Metrics sent by EOS SDK itself remain unaffected.",
+      "default": false
+    },
+    "namespace_id": {
+      "type": "string",
+      "description": "Namespace ID of the game that is used when fetching entitlements. Normally ScreamAPI will automatically get this during EOS SDK initialization. However, in case of late injection, this option can be used to provide the game's namespace ID.",
+      "default": ""
+    },
+    "default_dlc_status": {
+      "type": "string",
+      "description": "Specifies default DLC status.",
+      "enum": ["unlocked", "locked", "original"],
+      "default": "unlocked"
+    },
+    "override_dlc_status": {
+      "type": "object",
+      "description": "Overrides the status of individual DLCs. An object with 'key': 'value' pairs, where key is DLC ID (32-character hex string) and value is DLC status.",
+      "default": {},
+      "additionalProperties": {
+        "type": "string",
+        "enum": ["unlocked", "locked", "original"]
+      },
+      "propertyNames": {
+        "pattern": "^[a-fA-F0-9]{32}$"
+      }
+    },
+    "extra_graphql_endpoints": {
+      "type": "array",
+      "description": "Allows users to specify latest GraphQL endpoint(s) to fetch entitlements.",
+      "default": [],
+      "items": {
+        "type": "string",
+        "format": "uri"
+      }
+    },
+    "extra_entitlements": {
+      "type": "object",
+      "description": "Additional entitlements that ScreamAPI will inject when a game requests all entitlements. Object with 'key': 'value' pairs, where key is DLC ID (32-character hex string) and value is DLC title (can be empty).",
+      "default": {},
+      "additionalProperties": {
+        "type": "string"
+      },
+      "propertyNames": {
+        "pattern": "^[a-fA-F0-9]{32}$"
+      }
+    }
+  },
+  "required": [],
+  "additionalProperties": false,
+  "examples": [
+    {
+      "$schema": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json",
+      "$version": 3,
+      "logging": true,
+      "log_eos": true,
+      "block_metrics": true,
+      "namespace_id": "catnip",
+      "default_dlc_status": "unlocked",
+      "override_dlc_status": {
+        "12f2fca1c9304897b581254a0913ac51": "original",
+        "6a3c06879500496b853726573b896dff": "unlocked",
+        "3a6a3f9b351b4b599808df3267669b83": "locked"
+      },
+      "extra_graphql_endpoints": [
+        "https://launcher.store.epicgames.com/graphql",
+        "https://graphql.unrealengine.com/ue/graphql"
+      ],
+      "extra_entitlements": {
+        "fa7463c069a74d07aadf315df9b4e28b": "Big Top Breakout",
+        "89867f8b0e79421698e4705a72a48b49": "Dungeons and Duct Tape"
+      }
+    }
+  ]
+}

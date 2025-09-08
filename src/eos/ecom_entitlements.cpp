@@ -1,105 +1,92 @@
-#include <scream_api/scream_api.hpp>
-#include <scream_api/config.hpp>
-#include <scream_api/api.hpp>
-#include <game_mode/game_mode.hpp>
+#include <eos_ecom.h>
 
 #include <koalabox/http_client.hpp>
 #include <koalabox/logger.hpp>
-#include <koalabox/util.hpp>
 
-#include <sdk/eos_ecom.h>
+#include "scream_api/api.hpp"
+#include "scream_api/config.hpp"
+#include "scream_api/scream_api.hpp"
 
-using namespace scream_api;
+namespace {
+    scream_api::api::entitlement_map_t entitlement_map;
 
-Vector<String> entitlements; // ids
-Map<String, String> entitlement_map;  // id => title
+    // We need to respond with entitlements by index, hence we need to maintain list of IDs as well.
+    std::vector<scream_api::api::entitlement_id_t> entitlement_ids;
 
-// This hook does not perform any unlocking yet.
-// It is implemented to collect debug logs for potential improvements.
-DLL_EXPORT(void) EOS_Ecom_QueryEntitlementToken(
-    EOS_HEcom Handle,
-    const EOS_Ecom_QueryEntitlementTokenOptions* Options,
-    void* ClientData,
-    const EOS_Ecom_OnQueryEntitlementTokenCallback CompletionDelegate // NOLINT(misc-misplaced-const)
-) {
-    GET_ORIGINAL_FUNCTION(EOS_Ecom_QueryEntitlementToken)
+    void auto_fetch_entitlements() {
+        auto namespace_id = scream_api::namespace_id;
+        if(namespace_id.empty()) {
+            namespace_id = scream_api::config::instance.namespace_id;
+            LOG_DEBUG("Using namespace_id from config: '{}'", namespace_id);
+        }
 
-    const auto orig = [&]() {
-        EOS_Ecom_QueryEntitlementToken_o(Handle, Options, ClientData, CompletionDelegate);
-    };
+        if(namespace_id.empty()) {
+            LOG_WARN(
+                "EOS_Ecom_QueryEntitlements callback: namespace_id is not set. "
+                "Probable cause: ScreamAPI was injected too late.\n"
+                "Try injecting it earlier, so that ScreamAPI is loaded before EOSSDK DLL.\n"
+                "If that is not possible, you can manually set `namespace_id` using a config file."
+            );
 
-    if (not Options) {
-        return orig();
-    }
+            return;
+        }
 
-    LOG_DEBUG("{} -> EntitlementNameCount: {}", __func__, Options->EntitlementNameCount)
+        if(!entitlement_map.empty()) {
+            // We are already making an entitlement map
+            return;
+        }
 
-    const auto names = Options->EntitlementNames;
+        static scream_api::api::entitlement_map_t entitlements_cache;
 
-    if (not names) {
-        return orig();
-    }
+        const auto entitlements_opt = scream_api::api::fetch_entitlements(namespace_id);
+        if(entitlements_opt.has_value()) {
+            entitlements_cache = *entitlements_opt;
+        }
 
-    for (uint32_t i = 0; i < Options->EntitlementNameCount; i++) {
-        const auto name = names[i];
+        if(entitlements_cache.empty()) {
+            // Failed to fetch & no cache, therefore nothing to inject
+            return;
+        }
 
-        if (name) {
-            LOG_DEBUG("  EntitlementName: {}", name)
+        for(const auto& [id, title] : entitlements_cache) {
+            if(scream_api::config::is_dlc_unlocked(id, false)) {
+                LOG_DEBUG(R"(  Adding auto-fetched entitlement: {} - "{}")", id, title);
+                entitlement_map[id] = title;
+            }
         }
     }
 
-    struct Container {
-        void* ClientData;
-        EOS_Ecom_OnQueryEntitlementTokenCallback CompletionDelegate;
-    };
-
-    EOS_Ecom_QueryEntitlementToken_o(
-        Handle, Options,
-        new Container{ ClientData, CompletionDelegate },
-        [](const EOS_Ecom_QueryEntitlementTokenCallbackInfo* Data) {
-            const auto container = static_cast<Container*>(Data->ClientData);
-
-            LOG_DEBUG(
-                "EOS_Ecom_QueryEntitlementToken callback result : {}, token: {}",
-                (uint32_t) Data->ResultCode, Data->EntitlementToken
-            )
-
-            auto* mData = const_cast<EOS_Ecom_QueryEntitlementTokenCallbackInfo*>(Data);
-
-            mData->ResultCode = EOS_EResult::EOS_Success;
-            mData->ClientData = container->ClientData;
-
-            container->CompletionDelegate(Data);
-
-            delete container;
+    void inject_extra_entitlements() {
+        for(auto& [id, title] : scream_api::config::instance.extra_entitlements) {
+            if(scream_api::config::is_dlc_unlocked(id, true)) {
+                LOG_DEBUG(R"(Adding entitlement from config: {} - "{}")", id, title);
+                entitlement_map[id] = title;
+            }
         }
-    );
+    }
 }
 
+// Entitlements API is not how games should normally query DLC ownership.
+// However, some games like The Escapists 2 do make use of it, instead of the Items API.
+// Hence, we need to handle Entitlements API asw well.
+
 DLL_EXPORT(void) EOS_Ecom_QueryEntitlements(
-    EOS_HEcom Handle,
+    EOS_EcomHandle* const Handle,
     const EOS_Ecom_QueryEntitlementsOptions* Options,
     void* ClientData,
-    const EOS_Ecom_OnQueryEntitlementsCallback CompletionDelegate // NOLINT(misc-misplaced-const)
+    const EOS_Ecom_OnQueryEntitlementsCallback CompletionDelegate
 ) {
-    GET_ORIGINAL_FUNCTION(EOS_Ecom_QueryEntitlements)
-
-    LOG_INFO("❓ Game requested {} entitlements:", Options->EntitlementNameCount)
+    LOG_INFO("Game queried ownership of {} entitlements:", Options->EntitlementNameCount);
 
     entitlement_map.clear();
+    entitlement_ids.clear();
 
-    for (uint32_t i = 0; i < Options->EntitlementNameCount; i++) {
-        const auto id = Options->EntitlementNames[i];
-        LOG_INFO("  ❔ {}", id)
+    for(auto i = 0U; i < Options->EntitlementNameCount; i++) {
+        const char* const id = Options->EntitlementNames[i];
+        LOG_INFO("  {}", id);
 
-        const auto owned = scream_api::config::is_dlc_unlocked(
-            scream_api::game_mode::namespace_id,
-            id,
-            true
-        );
-
-        if (owned) {
-            entitlement_map[id] = fmt::format("DLC {}", id);
+        if(scream_api::config::is_dlc_unlocked(id, true)) {
+            entitlement_map[id] = std::format("Unknown Title", id);
         }
     }
 
@@ -108,95 +95,43 @@ DLL_EXPORT(void) EOS_Ecom_QueryEntitlements(
         EOS_Ecom_OnQueryEntitlementsCallback CompletionDelegate;
     };
 
-    EOS_Ecom_QueryEntitlements_o(
-        Handle, Options,
-        new Container{ ClientData, CompletionDelegate },
+    CALL_ORIGINAL_FN(EOS_Ecom_QueryEntitlements)(
+        Handle,
+        Options,
+        new Container{ClientData, CompletionDelegate},
         [](const EOS_Ecom_QueryEntitlementsCallbackInfo* Data) {
             try {
-                const auto container = static_cast<Container*>(Data->ClientData);
+                const auto* const container = static_cast<Container*>(Data->ClientData);
 
-                const auto& namespace_id = scream_api::game_mode::namespace_id;
+                auto_fetch_entitlements();
+                inject_extra_entitlements();
 
-                // Inject online entitlements
-                if (namespace_id.empty()) {
-                    LOG_WARN(
-                        "EOS_Ecom_QueryEntitlements callback: namespace_id is not set. "
-                        "Perhaps you should try another loader DLL, "
-                        "so that ScreamAPI is loaded before EOS SDK dll"
-                    )
-                } else if (entitlement_map.empty()) {
-                    const auto entitlements_opt = api::fetch_entitlements(namespace_id);
+                entitlement_ids = std::vector(std::from_range, std::views::keys(entitlement_map));
 
-                    if (entitlements_opt) {
-                        for (const auto& [id, title]: *entitlements_opt) {
-                            const auto is_unlocked = scream_api::config::is_dlc_unlocked(
-                                namespace_id,
-                                id,
-                                false
-                            );
-
-                            if (is_unlocked) {
-                                LOG_DEBUG(
-                                    R"(➕ Adding auto-fetched entitlement: {} - "{}")", id, title
-                                )
-                                entitlement_map[id] = title;
-                            }
-                        }
-                    }
+                LOG_INFO("Responding with {} entitlements:", entitlement_map.size());
+                for(const auto& [id, title] : entitlement_map) {
+                    LOG_INFO(R"(  {} = "{}")", id, title);
                 }
 
-                // Inject extra entitlements
-                const auto& extra = CONFIG.extra_entitlements;
-                if (extra.contains(namespace_id)) {
-                    const auto& game = extra.at(namespace_id);
+                auto* data = const_cast<EOS_Ecom_QueryEntitlementsCallbackInfo*>(Data);
 
-                    for (auto& [id, title]: game.entitlements) {
-                        const auto is_unlocked = scream_api::config::is_dlc_unlocked(
-                            namespace_id,
-                            id,
-                            true
-                        );
-
-                        if (is_unlocked) {
-                            LOG_DEBUG(R"(Adding entitlement from config: {} - "{}")", id, title)
-
-                            entitlement_map[id] = title;
-                        }
-                    }
-                }
-
-                entitlements.clear();
-
-                auto ids = std::views::keys(entitlement_map);
-                entitlements = { ids.begin(), ids.end() };
-
-                LOG_INFO("🍀 ScreamAPI prepared {} entitlements:", entitlements.size())
-                for (const auto& id: entitlements) {
-                    LOG_INFO(R"(  ✅ {} = "{}")", id, entitlement_map[id])
-                }
-
-                auto* mData = const_cast<EOS_Ecom_QueryEntitlementsCallbackInfo*>(Data);
-
-                mData->ResultCode = EOS_EResult::EOS_Success;
-                mData->ClientData = container->ClientData;
+                data->ResultCode = EOS_EResult::EOS_Success;
+                data->ClientData = container->ClientData;
 
                 container->CompletionDelegate(Data);
 
                 delete container;
-            } catch (const Exception& e) {
+            } catch(const std::exception& e) {
                 LOG_ERROR("EOS_Ecom_QueryEntitlements callback error: {}", e.what())
             }
         }
     );
 }
 
-DLL_EXPORT(uint32_t) EOS_Ecom_GetEntitlementsCount(
-    EOS_HEcom,
-    const EOS_Ecom_GetEntitlementsCountOptions*
-) {
-    const auto count = entitlements.size();
+DLL_EXPORT(uint32_t) EOS_Ecom_GetEntitlementsCount(EOS_HEcom, const EOS_Ecom_GetEntitlementsCountOptions*) {
+    const auto count = entitlement_map.size();
 
-    LOG_DEBUG("Responding with the count of {} entitlements", count)
+    LOG_DEBUG("Responding with {} entitlements", count);
 
     return count;
 }
@@ -207,24 +142,25 @@ DLL_EXPORT(EOS_EResult) EOS_Ecom_CopyEntitlementByIndex(
     EOS_Ecom_Entitlement** OutEntitlement
 ) {
     const auto index = Options->EntitlementIndex;
-    if (index >= entitlements.size()) {
+    if(index >= entitlement_ids.size()) {
         LOG_WARN(
             "Game requested invalid entitlement index: {}. Max size: {}",
-            index, entitlements.size()
-        )
+            index, entitlement_ids.size()
+        );
 
         return EOS_EResult::EOS_NotFound;
     }
 
-    const auto id = entitlements[index].c_str();
+    const auto& id = entitlement_ids[index];
+    const auto& title = entitlement_map.at(id);
 
-    LOG_DEBUG("Copying the entitlement: {} at index: {}", id, index)
+    LOG_DEBUG("Copying the entitlement: {} at index: {}", id, index);
 
     *OutEntitlement = new EOS_Ecom_Entitlement{
         .ApiVersion = EOS_ECOM_ENTITLEMENT_API_LATEST,
-        .EntitlementName = id,
-        .EntitlementId = id,
-        .CatalogItemId = id,
+        .EntitlementName = title.c_str(),
+        .EntitlementId = id.c_str(), // Not actually true, but so far no issues.
+        .CatalogItemId = id.c_str(),
         .ServerIndex = -1,
         .bRedeemed = false,
         .EndTimestamp = -1,
@@ -234,10 +170,10 @@ DLL_EXPORT(EOS_EResult) EOS_Ecom_CopyEntitlementByIndex(
 }
 
 DLL_EXPORT(void) EOS_Ecom_Entitlement_Release(EOS_Ecom_Entitlement* Entitlement) {
-    if (Entitlement) {
-        LOG_DEBUG("Freeing a copy of the entitlement: {}", Entitlement->EntitlementName)
+    if(Entitlement) {
+        LOG_DEBUG("Freeing a copy of the entitlement: {}", Entitlement->EntitlementId);
         delete Entitlement;
     } else {
-        LOG_WARN("Game attempted to free a null entitlement")
+        LOG_WARN("Game attempted to free a null entitlement");
     }
 }

@@ -1,79 +1,56 @@
 #pragma once
 
-#include <scream_api/scream_api.hpp>
+#include <string>
 
-#define CONFIG scream_api::config::instance
+#include <nlohmann/json.hpp>
 
 namespace scream_api::config {
-
-    struct MitmProxy {
-        int listen_port = 9999;
-        bool show_window = false;
-        String extra_args;
-        Map<String, String> upstream_proxies;
-
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(
-            MitmProxy,
-            listen_port,
-            show_window,
-            extra_args,
-            upstream_proxies
-        );
-    };
-
-    struct Game {
-        // Key is namespace, value is item name
-        Map<String, String> entitlements;
-
-        NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(Game, entitlements);
-    };
-
-    using GameEntitlementsMap = Map<String, Game>;
-
-    enum class ItemStatus {
+    enum class dlc_status {
         UNDEFINED,
         ORIGINAL,
         UNLOCKED,
         LOCKED,
     };
 
-    NLOHMANN_JSON_SERIALIZE_ENUM(ItemStatus, {
-        { ItemStatus::UNDEFINED, nullptr },
-        { ItemStatus::ORIGINAL, "original" },
-        { ItemStatus::UNLOCKED, "unlocked" },
-        { ItemStatus::LOCKED, "locked" },
-    })
+    // @formatter:off
+    NLOHMANN_JSON_SERIALIZE_ENUM(dlc_status, {
+        { dlc_status::UNDEFINED, nullptr     },
+        { dlc_status::ORIGINAL,  "original"  },
+        { dlc_status::UNLOCKED,  "unlocked"  },
+        { dlc_status::LOCKED,    "locked"    },
+    }) // @formatter:on
 
     struct Config {
-        int $version = 4;
+        uint32_t $version = 3;
         bool logging = false;
-        bool eos_logging = false;
+        bool log_eos = false;
         bool block_metrics = false;
-        ItemStatus default_game_status = ItemStatus::UNLOCKED;
-        Map<String, ItemStatus> override_game_status;
-        Map<String, ItemStatus> override_dlc_status;
-        GameEntitlementsMap extra_entitlements;
-        MitmProxy mitmproxy;
+        std::string namespace_id;
+        dlc_status default_dlc_status = dlc_status::UNLOCKED;
+        std::map<std::string, dlc_status> override_dlc_status;
+        // Key is id, Value is title
+        std::vector<std::string> extra_graphql_endpoints;
+        std::map<std::string, std::string> extra_entitlements;
 
         NLOHMANN_DEFINE_TYPE_INTRUSIVE_WITH_DEFAULT(
             Config,
+            $version,
             logging,
-            eos_logging,
+            log_eos,
             block_metrics,
-            default_game_status,
-            override_game_status,
+            namespace_id,
+            default_dlc_status,
             override_dlc_status,
-            extra_entitlements,
-            mitmproxy
-        )
+            extra_graphql_endpoints,
+            extra_entitlements
+        );
     };
 
     extern Config instance;
 
-    void init();
+    bool is_dlc_unlocked(const std::string& entitlement_id, bool original_unlocked);
 
-    DLL_EXPORT(void) ReloadConfig();
-
-    bool is_dlc_unlocked(String game_id, String dlc_id, bool original_unlocked);
-
+    inline bool is_logging_eos() {
+        return instance.logging && instance.log_eos;
+    }
 }

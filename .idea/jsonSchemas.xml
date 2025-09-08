@@ -3,16 +3,17 @@
   <component name="JsonSchemaMappingsProjectConfiguration">
     <state>
       <map>
-        <entry key="VCPKG">
+        <entry key="ScreamAPI config">
           <value>
             <SchemaInfo>
-              <option name="name" value="VCPKG" />
-              <option name="relativePathToSchema" value="https://raw.githubusercontent.com/microsoft/vcpkg/master/scripts/vcpkg.schema.json" />
-              <option name="schemaVersion" value="JSON Schema version 7" />
+              <option name="generatedName" value="New Schema" />
+              <option name="name" value="ScreamAPI config" />
+              <option name="relativePathToSchema" value="res/ScreamAPI.schema.json" />
+              <option name="schemaVersion" value="JSON Schema 202,012" />
               <option name="patterns">
                 <list>
                   <Item>
-                    <option name="path" value="vcpkg.json" />
+                    <option name="path" value="res/ScreamAPI.config.json" />
                   </Item>
                 </list>
               </option>

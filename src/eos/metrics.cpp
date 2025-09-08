@@ -1,39 +1,30 @@
-#include <scream_api/scream_api.hpp>
-#include <scream_api/config.hpp>
-#include <game_mode/game_mode.hpp>
+#include <eos_metrics.h>
 
 #include <koalabox/logger.hpp>
 
-#include <sdk/eos_metrics.h>
-
-using namespace scream_api;
+#include <scream_api/config.hpp>
+#include <scream_api/scream_api.hpp>
 
 DLL_EXPORT(EOS_EResult) EOS_Metrics_BeginPlayerSession(
-    EOS_HMetrics Handle,
+    EOS_MetricsHandle* const Handle,
     const EOS_Metrics_BeginPlayerSessionOptions* Options
 ) {
-    GET_ORIGINAL_FUNCTION(EOS_Metrics_BeginPlayerSession)
-
-    if (CONFIG.block_metrics) {
-        LOG_DEBUG("⛔ Blocking EOS_Metrics_BeginPlayerSession")
-
+    if(scream_api::config::instance.block_metrics) {
+        LOG_INFO("Blocking {}", __func__);
         return EOS_EResult::EOS_Success;
-    } else {
-        return EOS_Metrics_BeginPlayerSession_o(Handle, Options);
     }
+
+    CALL_ORIGINAL_FN(EOS_Metrics_BeginPlayerSession, return)(Handle, Options);
 }
 
 DLL_EXPORT(EOS_EResult) EOS_Metrics_EndPlayerSession(
-    EOS_HMetrics Handle,
+    EOS_MetricsHandle* const Handle,
     const EOS_Metrics_EndPlayerSessionOptions* Options
 ) {
-    GET_ORIGINAL_FUNCTION(EOS_Metrics_EndPlayerSession)
-
-    if (CONFIG.block_metrics) {
-        LOG_DEBUG("⛔ Blocking EOS_Metrics_EndPlayerSession")
-
+    if(scream_api::config::instance.block_metrics) {
+        LOG_INFO("Blocking {}", __func__);
         return EOS_EResult::EOS_Success;
-    } else {
-        return EOS_Metrics_EndPlayerSession_o(Handle, Options);
     }
+
+    CALL_ORIGINAL_FN(EOS_Metrics_EndPlayerSession, return)(Handle, Options);
 }

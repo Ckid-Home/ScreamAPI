@@ -1,11 +1,12 @@
 {
-  "$version": 4,
-  "logging": false,
-  "eos_logging": false,
+  "$schema": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json",
+  "$version": 3,
+  "logging": true,
+  "log_eos": false,
   "block_metrics": false,
-  "default_game_status": "unlocked",
-  "override_game_status": {},
+  "namespace_id": "",
+  "default_dlc_status": "unlocked",
   "override_dlc_status": {},
-  "extra_entitlements": {},
-  "mitmproxy": {}
+  "extra_graphql_endpoints": [],
+  "extra_entitlements": {}
 }
