@@ -106,10 +106,10 @@ In such cases, it might be worth trying {special_k}, which can inject ScreamAPI 
 
 ==== 🔀 Proxy mode
 
-. Find `steam_api.dll` / `steam_api64.dll` file in game directory, and rename it to `steam_api_o.dll` / `steam_api64_o.dll`.
+. Find `EOSSDK-Win32-Shipping.dll` / `EOSSDK-Win64-Shipping.dll` file in game directory, and rename it to `steam_api_o.dll` / `steam_api64_o.dll`.
 . Download the latest ScreamAPI release zip from  {screamapi_release}.
 . From ScreamAPI archive unpack `ScreamAPI32.dll` / `ScreamAPI64.dll`, depending on the game bitness.
-. Rename the unpacked DLL to `steam_api.dll` / `steam_api64.dll` and place it next to the `steam_api_o.dll` / `steam_api64_o.dll` file.
+. Rename the unpacked DLL to `EOSSDK-Win32-Shipping.dll` / `EOSSDK-Win64-Shipping.dll` and place it next to the `steam_api_o.dll` / `steam_api64_o.dll` file.
 
 NOTE: There are games which have extra protections that break proxy mode.
 In such cases, see the note on <<special_k_note, Hook mode with Special K>>
