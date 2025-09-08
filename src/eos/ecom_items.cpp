@@ -11,7 +11,7 @@ DLL_EXPORT(void) EOS_Ecom_QueryOwnership(
     void* ClientData,
     const EOS_Ecom_OnQueryOwnershipCallback CompletionDelegate
 ) {
-    LOG_INFO("Game requested ownership of {} items:", Options->CatalogItemIdCount);
+    LOG_INFO("Game requested ownership of {} item(s):", Options->CatalogItemIdCount);
 
     for(uint32_t i = 0; i < Options->CatalogItemIdCount; i++) {
         LOG_INFO("  {}", Options->CatalogItemIds[i]);
@@ -29,7 +29,7 @@ DLL_EXPORT(void) EOS_Ecom_QueryOwnership(
         [](const EOS_Ecom_QueryOwnershipCallbackInfo* Data) {
             const auto* const container = static_cast<Container*>(Data->ClientData);
 
-            LOG_INFO("Responding with {} items:", Data->ItemOwnershipCount);
+            LOG_INFO("Responding with {} item(s):", Data->ItemOwnershipCount);
 
             for(uint32_t i = 0; i < Data->ItemOwnershipCount; i++) {
                 const auto* const item = Data->ItemOwnership + i;

@@ -67,8 +67,8 @@ namespace {
 }
 
 // Entitlements API is not how games should normally query DLC ownership.
-// However, some games like The Escapists 2 do make use of it, instead of the Items API.
-// Hence, we need to handle Entitlements API asw well.
+// However, some games like Sonic Mania & The Escapists 2 do make use of it in addition to the Items API.
+// Hence, we need to handle Entitlements API as well.
 
 DLL_EXPORT(void) EOS_Ecom_QueryEntitlements(
     EOS_EcomHandle* const Handle,

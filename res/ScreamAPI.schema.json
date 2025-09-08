@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json",
+  "$id": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v4.0.0/res/ScreamAPI.schema.json",
   "title": "ScreamAPI Configuration",
   "type": "object",
   "properties": {
@@ -77,7 +77,7 @@
   "additionalProperties": false,
   "examples": [
     {
-      "$schema": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json",
+      "$schema": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v4.0.0/res/ScreamAPI.schema.json",
       "$version": 3,
       "logging": true,
       "log_eos": true,

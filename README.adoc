@@ -204,7 +204,7 @@ They serve as utilities for text or GUI editors.
 |`$schema`
 |URL of a JSON Schema that corresponds to this config.
 |String
-|https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json[ScreamAPI.schema.json]
+|https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v4.0.0/res/ScreamAPI.schema.json[ScreamAPI.schema.json]
 |URL to a valid ScreamAPI config JSON schema
 
 |`$version`
@@ -224,7 +224,7 @@ Below you can find an example config where nearly each option has been customize
 [source,json]
 ----
 {
-  "$schema": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v3.1.0/res/ScreamAPI.schema.json",
+  "$schema": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v4.0.0/res/ScreamAPI.schema.json",
   "$version": 3,
   "logging": true,
   "log_eos": true,
