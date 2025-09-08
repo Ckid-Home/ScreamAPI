@@ -8,8 +8,8 @@
 namespace {
     std::vector<std::string> get_graphql_endpoints() {
         std::vector<std::string> endpoints = {
-            "https://launcher.store.epicgames.com/graphql111", // Needs a valid User-Agent header
-            "https://graphql.unrealengine.com/ue/graphql222"
+            "https://launcher.store.epicgames.com/graphql", // Needs a valid User-Agent header
+            "https://graphql.unrealengine.com/ue/graphql"
         };
 
         const auto& extra = scream_api::config::instance.extra_graphql_endpoints;
