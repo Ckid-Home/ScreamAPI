@@ -4,8 +4,7 @@ project(ScreamAPI VERSION 4.0.0)
 
 include(KoalaBox/cmake/KoalaBox.cmake)
 
-add_subdirectory(KoalaBox EXCLUDE_FROM_ALL)
-
+add_subdirectory(KoalaBox)
 
 set(
     SCREAM_API_SOURCES

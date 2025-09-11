@@ -2,7 +2,7 @@ Project page: https://github.com/acidicoala/ScreamAPI#readme
 Forum topic: https://cs.rin.ru/forum/viewtopic.php?p=2161197#p2161197
 DLC Database: https://scream-db.web.app
 
-### NOTE ###
+*** NOTE ***
 
 Do NOT use the ScreamAPI.config.json file unless you have a good reason.
 The default config file enables logging, which might have a negative impact on performance in games.

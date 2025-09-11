@@ -1,8 +1,6 @@
 #pragma once
 
-/**
- * Collection of function exports that were at some point discontinued in EOS SDK
- */
+/// Collection of function exports that were at some point discontinued in EOS SDK
 
 #ifdef _WIN64
 

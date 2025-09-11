@@ -1,76 +1,95 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://raw.githubusercontent.com/acidicoala/ScreamAPI/refs/tags/v4.0.0/res/ScreamAPI.schema.json",
-  "title": "ScreamAPI Configuration",
+  "title": "ScreamAPI configuration",
   "type": "object",
   "properties": {
     "$schema": {
       "type": "string",
       "description": "URL of a JSON Schema that corresponds to this config.",
-      "format": "uri"
+      "x-default": "[ScreamAPI.schema.json](res/ScreamAPI.schema.json)",
+      "x-valid-values": "URL to a valid ScreamAPI config JSON schema."
     },
     "$version": {
       "type": "integer",
       "description": "Reserved for use by tools like GUI config editors.",
-      "const": 3
+      "const": 3,
+      "x-valid-values": "Integer numbers from 1 and beyond."
     },
     "logging": {
       "type": "boolean",
       "description": "Enables logging to ScreamAPI.log.log file.",
-      "default": false
+      "default": false,
+      "x-packaged-default": true,
+      "x-valid-values": "`true` or `false`"
     },
     "log_eos": {
       "type": "boolean",
       "description": "Enables or disables interception of EOS SDK logs. Requires 'logging' to be enabled.",
-      "default": false
+      "default": false,
+      "x-valid-values": "`true` or `false`"
     },
     "block_metrics": {
       "type": "boolean",
       "description": "Blocks reporting of analytics and usage metrics by the game to Epic Online Services. Metrics sent by EOS SDK itself remain unaffected.",
-      "default": false
+      "default": false,
+      "x-valid-values": "`true` or `false`"
     },
     "namespace_id": {
       "type": "string",
       "description": "Namespace ID of the game that is used when fetching entitlements. Normally ScreamAPI will automatically get this during EOS SDK initialization. However, in case of late injection, this option can be used to provide the game's namespace ID.",
-      "default": ""
+      "default": "",
+      "x-valid-values": "Namespace ID of any game can be found on [{{ dlc_database }}]({{ dlc_database_url }})."
     },
     "default_dlc_status": {
       "type": "string",
       "description": "Specifies default DLC status.",
-      "enum": ["unlocked", "locked", "original"],
-      "default": "unlocked"
+      "enum": [
+        "unlocked",
+        "locked",
+        "original"
+      ],
+      "default": "unlocked",
+      "x-valid-values": "`\"unlocked\"` or `\"locked\"` or `\"original\"`"
     },
     "override_dlc_status": {
       "type": "object",
-      "description": "Overrides the status of individual DLCs. An object with 'key': 'value' pairs, where key is DLC ID (32-character hex string) and value is DLC status.",
+      "description": "Overrides the status of individual DLCs. An object with \"key\": \"value\" pairs, where key is DLC ID (32-character hex string) and value is DLC status.",
       "default": {},
       "additionalProperties": {
         "type": "string",
-        "enum": ["unlocked", "locked", "original"]
+        "enum": [
+          "unlocked",
+          "locked",
+          "original"
+        ]
       },
       "propertyNames": {
         "pattern": "^[a-fA-F0-9]{32}$"
-      }
+      },
+      "x-valid-values": "An object with `\"key\": \"value\"` pairs, where key is DLC ID and value is DLC status."
     },
     "extra_graphql_endpoints": {
       "type": "array",
-      "description": "Allows users to specify latest GraphQL endpoint(s) to fetch entitlements.",
+      "description": "When a game requests all available entitlements ScreamAPI has to make a request to a valid Epic Games GraphQL endpoint to fetch this information. This means that when Epic Games changes their endpoints, ScreamAPI loses ability to automatically fetch entitlements. This where this option becomes useful, allowing users to specify latest GraphQL endpoint (or several).",
       "default": [],
       "items": {
         "type": "string",
         "format": "uri"
-      }
+      },
+      "x-valid-values": "An array of valid GraphQL endpoints (`[\"https://...\"]`)"
     },
     "extra_entitlements": {
       "type": "object",
-      "description": "Additional entitlements that ScreamAPI will inject when a game requests all entitlements. Object with 'key': 'value' pairs, where key is DLC ID (32-character hex string) and value is DLC title (can be empty).",
+      "description": "Additional entitlements that ScreamAPI will inject when a game requests all entitlements owned by the player. There is usually no need to manually entitlement IDs because ScreamAPI will automatically fetch them from Epic Games Store servers. However, if the servers are not accessible then this option becomes useful.",
       "default": {},
       "additionalProperties": {
         "type": "string"
       },
       "propertyNames": {
         "pattern": "^[a-fA-F0-9]{32}$"
-      }
+      },
+      "x-valid-values": "An object with `\"key\": \"value\"` pairs, where key is DLC IDand value is DLC title. Title is used only for logging, hence it can be left empty (i.e. `\"\"`)."
     }
   },
   "required": [],
@@ -82,12 +101,12 @@
       "logging": true,
       "log_eos": true,
       "block_metrics": true,
-      "namespace_id": "catnip",
+      "namespace_id": "115577f4ef1e4055aaf0da534fdfe81e",
       "default_dlc_status": "unlocked",
       "override_dlc_status": {
-        "12f2fca1c9304897b581254a0913ac51": "original",
-        "6a3c06879500496b853726573b896dff": "unlocked",
-        "3a6a3f9b351b4b599808df3267669b83": "locked"
+        "89867f8b0e79421698e4705a72a48b49": "original",
+        "f462bd795cc04772b0c285349bd61cc6": "unlocked",
+        "72620675f0e549f39d8e28b77fb88303": "locked"
       },
       "extra_graphql_endpoints": [
         "https://launcher.store.epicgames.com/graphql",

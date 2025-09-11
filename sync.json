@@ -1,0 +1,52 @@
+{
+  "$schema": "./KoalaBox/res/sync.schema.json",
+  "variables": {
+    "project_name": "ScreamAPI",
+    "store_name": "Epic Games",
+    "store_sdk": "EOS SDK",
+    "store_sdk_full": "Epic Online Services Software Development Kit",
+    "sdk_dll_names": "`EOSSDK-Win32-Shipping.dll` or `EOSSDK-Win64-Shipping.dll`",
+    "sdk_dll_orig_names": "`EOSSDK-Win32-Shipping_o.dll` or `EOSSDK-Win64-Shipping_o.dll`",
+    "show_3rd_party_point": true,
+    "unlocker_dll_names": "`ScreamAPI32.dll` or `ScreamAPI64.dll`",
+    "config_filename": "ScreamAPI.config.json",
+    "github_repo_url": "https://github.com/acidicoala/ScreamAPI",
+    "forum_topic_url": "https://cs.rin.ru/forum/viewtopic.php?p=2161197#p2161197",
+    "dlc_database": "ScreamDB",
+    "dlc_database_url": "https://scream-db.web.app",
+    "json_schema_path": "./res/ScreamAPI.schema.json"
+  },
+  "tasks": [
+    {
+      "type": "text",
+      "template_file": "./KoalaBox/templates/.clang-tidy"
+    },
+    {
+      "type": "text",
+      "template_file": "./KoalaBox/templates/.gitattributes"
+    },
+    {
+      "type": "text",
+      "template_file": "./KoalaBox/templates/UNLICENSE.txt"
+    },
+    {
+      "type": "text",
+      "template_file": "./KoalaBox/templates/build.ps1"
+    },
+    {
+      "type": "text",
+      "template_file": "./KoalaBox/templates/README.txt",
+      "destination_dir": "./res/"
+    },
+    {
+      "type": "text",
+      "template_file": "./README.template.md",
+      "file_name": "README.md"
+    },
+    {
+      "type": "json",
+      "schema_file": "./res/ScreamAPI.schema.json",
+      "destination_file": "./res/{{ config_filename }}"
+    }
+  ]
+}
