@@ -29,7 +29,7 @@ _Legit DLC Unlocker for Epic Online Services._
 
 ## 🎓 Extra info
 
-### When does ScreamAPI handle entitlement requests?
+### 🔑 When does ScreamAPI handle entitlement requests?
 
 When a game requests a list of entitlements that user owns, it may specify an optional list of entitlement IDs. The {{ store_sdk }} is supposed to respond only with entitlements that match these IDs. Hence, {{ project_name }} can use this information to generate a response which contains all entitlements specified by the game. However, if a game does not provide a list of entitlement IDs then {{ project_name }} has to resort to making a request to {{ store_name }} Store servers to retrieve all offered DLCs, whose IDs will be used to generate a response.
 

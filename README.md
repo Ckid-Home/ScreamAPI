@@ -21,13 +21,13 @@ _Legit DLC Unlocker for Epic Online Services._
 
 ## 📖 Introduction
 
-### What is ScreamAPI?
+### ❓ What is ScreamAPI?
 
 ScreamAPI is a DLC unlocker for games that are _legitimately_ owned in your Epic Games account.
 It attempts to fool games that use Epic Online Services Software Development Kit (EOS SDK) into thinking that you own the game's DLCs.
 However, ScreamAPI does not modify the rest of the EOS SDK, hence features like multiplayer, achievements, and so on remain fully functional.
 
-### Which games are supported?
+### ❔ Which games are supported?
 
 Only games that use Epic Online Services Software Development Kit for the DLC ownership verification are supported.
 Hence, if a game's installation directory does not contain any `EOSSDK-Win32-Shipping.dll` or `EOSSDK-Win64-Shipping.dll` files then it's definitely not supported.
@@ -150,19 +150,20 @@ Below you can find the detailed description of each available config option. In 
 
 | Option | Description | Type | Default | Valid values |
 |--------|-------------|------|---------|--------------|
-| `logging` | Enables logging to ScreamAPI.log.log file. | Boolean | `false` | `true` or `false` |
-| `log_eos` | Enables or disables interception of EOS SDK logs. Requires 'logging' to be enabled. | Boolean | `false` | `true` or `false` |
-| `block_metrics` | Blocks reporting of analytics and usage metrics by the game to Epic Online Services. Metrics sent by EOS SDK itself remain unaffected. | Boolean | `false` | `true` or `false` |
+| `logging` | Enables logging to ScreamAPI.log.log file. | Boolean | `false` | `true` or `false`. |
+| `log_eos` | Enables or disables interception of EOS SDK logs. Requires 'logging' to be enabled. | Boolean | `false` | `true` or `false`. |
+| `block_metrics` | Blocks reporting of analytics and usage metrics by the game to Epic Online Services. Metrics sent by EOS SDK itself remain unaffected. | Boolean | `false` | `true` or `false`. |
 | `namespace_id` | Namespace ID of the game that is used when fetching entitlements. Normally ScreamAPI will automatically get this during EOS SDK initialization. However, in case of late injection, this option can be used to provide the game's namespace ID. | String | `""` | Namespace ID of any game can be found on [ScreamDB](https://scream-db.web.app). |
-| `default_dlc_status` | Specifies default DLC status. | String | `"unlocked"` | `"unlocked"` or `"locked"` or `"original"` |
+| `default_dlc_status` | Specifies default DLC status. | String | `"unlocked"` | `"unlocked"` or `"locked"` or `"original"`. |
 | `override_dlc_status` | Overrides the status of individual DLCs. An object with "key": "value" pairs, where key is DLC ID (32-character hex string) and value is DLC status. | Object | `{}` | An object with `"key": "value"` pairs, where key is DLC ID and value is DLC status. |
-| `extra_graphql_endpoints` | When a game requests all available entitlements ScreamAPI has to make a request to a valid Epic Games GraphQL endpoint to fetch this information. This means that when Epic Games changes their endpoints, ScreamAPI loses ability to automatically fetch entitlements. This where this option becomes useful, allowing users to specify latest GraphQL endpoint (or several). | Array | `[]` | An array of valid GraphQL endpoints (`["https://..."]`) |
+| `extra_graphql_endpoints` | When a game requests all available entitlements ScreamAPI has to make a request to a valid Epic Games GraphQL endpoint to fetch this information. This means that when Epic Games changes their endpoints, ScreamAPI loses ability to automatically fetch entitlements. This where this option becomes useful, allowing users to specify latest GraphQL endpoint (or several). | Array | `[]` | An array of valid GraphQL endpoints (`["https://..."]`). |
 | `extra_entitlements` | Additional entitlements that ScreamAPI will inject when a game requests all entitlements owned by the player. There is usually no need to manually entitlement IDs because ScreamAPI will automatically fetch them from Epic Games Store servers. However, if the servers are not accessible then this option becomes useful. | Object | `{}` | An object with `"key": "value"` pairs, where key is DLC IDand value is DLC title. Title is used only for logging, hence it can be left empty (i.e. `""`). |
 
 
 <details><summary>Advanced options</summary>
 
-> [!NOTE] These options do not affect the unlocker, and should be left unmodified.
+> [!NOTE]
+> These options do not affect the unlocker, and should be left unmodified.
 > They serve as utilities for text or GUI editors.
 
 | Option | Description | Type | Default | Valid values |
@@ -209,7 +210,7 @@ Below you can find an example config where nearly every option has been customiz
 
 ## 🎓 Extra info
 
-### When does ScreamAPI handle entitlement requests?
+### 🔑 When does ScreamAPI handle entitlement requests?
 
 When a game requests a list of entitlements that user owns, it may specify an optional list of entitlement IDs. The EOS SDK is supposed to respond only with entitlements that match these IDs. Hence, ScreamAPI can use this information to generate a response which contains all entitlements specified by the game. However, if a game does not provide a list of entitlement IDs then ScreamAPI has to resort to making a request to Epic Games Store servers to retrieve all offered DLCs, whose IDs will be used to generate a response.
 

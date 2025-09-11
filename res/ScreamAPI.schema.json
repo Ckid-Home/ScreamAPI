@@ -21,19 +21,19 @@
       "description": "Enables logging to ScreamAPI.log.log file.",
       "default": false,
       "x-packaged-default": true,
-      "x-valid-values": "`true` or `false`"
+      "x-valid-values": "`true` or `false`."
     },
     "log_eos": {
       "type": "boolean",
       "description": "Enables or disables interception of EOS SDK logs. Requires 'logging' to be enabled.",
       "default": false,
-      "x-valid-values": "`true` or `false`"
+      "x-valid-values": "`true` or `false`."
     },
     "block_metrics": {
       "type": "boolean",
       "description": "Blocks reporting of analytics and usage metrics by the game to Epic Online Services. Metrics sent by EOS SDK itself remain unaffected.",
       "default": false,
-      "x-valid-values": "`true` or `false`"
+      "x-valid-values": "`true` or `false`."
     },
     "namespace_id": {
       "type": "string",
@@ -50,7 +50,7 @@
         "original"
       ],
       "default": "unlocked",
-      "x-valid-values": "`\"unlocked\"` or `\"locked\"` or `\"original\"`"
+      "x-valid-values": "`\"unlocked\"` or `\"locked\"` or `\"original\"`."
     },
     "override_dlc_status": {
       "type": "object",
@@ -77,7 +77,7 @@
         "type": "string",
         "format": "uri"
       },
-      "x-valid-values": "An array of valid GraphQL endpoints (`[\"https://...\"]`)"
+      "x-valid-values": "An array of valid GraphQL endpoints (`[\"https://...\"]`)."
     },
     "extra_entitlements": {
       "type": "object",
